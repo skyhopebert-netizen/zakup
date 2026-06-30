@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Стойка — Заявка на закупку</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
+
+<!-- React + ReactDOM -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<!-- Babel standalone — компилирует JSX прямо в браузере -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Lucide icons (UMD build) -->
+<script src="https://unpkg.com/lucide-react@0.383.0/dist/umd/lucide-react.js"></script>
+
+<style>
+  html, body { margin: 0; padding: 0; background: #0A0A0F; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+  // ============================================
+  // НАСТРОЙКИ SUPABASE
+  // ============================================
+  const SUPABASE_URL = 'https://whselnzhzbvxtkncausz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_PChhLBXS8la2mQUFa6AMwQ_jlqptKdI';
+  const SB_TABLE = 'app_storage';
+  const SB_REST = `${SUPABASE_URL}/rest/v1/${SB_TABLE}`;
+
+  // ============================================
+  // window.storage — реализация поверх Supabase REST API
+  // Совместима по сигнатуре с window.storage из артефактов Claude:
+  //   get(key, shared) -> {key, value, shared} | null
+  //   set(key, value, shared) -> {key, value, shared} | null
+  // Параметр shared здесь не используется для разделения данных
+  // (в нашем случае ВСЕ данные общие для всей команды — это и было целью),
+  // но сохранён для совместимости вызовов в коде приложения.
+  // Имя бариста (shared:false в исходном коде) хранится в localStorage,
+  // чтобы оставаться личным на конкретном устройстве.
+  // ============================================
+  window.storage = {
+    async get(key, shared) {
+      if (shared === false) {
+        // Личные данные устройства — localStorage
+        const v = localStorage.getItem('local_' + key);
+        if (v === null) throw new Error('not found');
+        return { key, value: v, shared: false };
+      }
+      try {
+        const res = await fetch(
+          `${SB_REST}?key=eq.${encodeURIComponent(key)}&select=value`,
+          {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+            },
+          }
+        );
+        if (!res.ok) throw new Error('fetch failed');
+        const rows = await res.json();
+        if (!rows || rows.length === 0) throw new Error('not found');
+        return { key, value: rows[0].value, shared: true };
+      } catch (e) {
+        throw e;
+      }
+    },
+
+    async set(key, value, shared) {
+      if (shared === false) {
+        localStorage.setItem('local_' + key, value);
+        return { key, value, shared: false };
+      }
+      try {
+        const res = await fetch(SB_REST, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=representation',
+          },
+          body: JSON.stringify({ key, value }),
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          console.error('Supabase set error:', txt);
+          return null;
+        }
+        return { key, value, shared: true };
+      } catch (e) {
+        console.error('Supabase set exception:', e);
+        return null;
+      }
+    },
+
+    async delete(key, shared) {
+      if (shared === false) {
+        localStorage.removeItem('local_' + key);
+        return { key, deleted: true, shared: false };
+      }
+      try {
+        const res = await fetch(`${SB_REST}?key=eq.${encodeURIComponent(key)}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+          },
+        });
+        return { key, deleted: res.ok, shared: true };
+      } catch (e) {
+        return null;
+      }
+    },
+
+    async list(prefix, shared) {
+      try {
+        let url = `${SB_REST}?select=key`;
+        if (prefix) url += `&key=like.${encodeURIComponent(prefix)}*`;
+        const res = await fetch(url, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+          },
+        });
+        if (!res.ok) throw new Error('list failed');
+        const rows = await res.json();
+        return { keys: rows.map(r => r.key), prefix, shared: true };
+      } catch (e) {
+        return null;
+      }
+    },
+  };
+</script>
+
+<!-- Сам компонент приложения, скомпилированный Babel прямо в браузере -->
+<script type="text/babel" src="./BaristaOrders.jsx"></script>
+
+<script type="text/babel">
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<BaristaOrders />);
+</script>
+
+</body>
+</html>
