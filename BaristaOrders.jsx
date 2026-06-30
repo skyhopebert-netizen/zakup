@@ -283,24 +283,34 @@ function BaristaOrders() {
     setAuthChecked(true);
   }, []);
 
-  const tryLogin = () => {
-    const pass = authPassInput.trim();
-    const found = APP_USERS.find(u => u.password === pass);
-    if (found) {
-      setAuthed(true);
-      setAuthError(false);
-      try {
-        localStorage.setItem('local_appAuthUser', found.name);
-        localStorage.setItem('local_baristaName', found.name);
-      } catch (e) {}
-      setBaristaName(found.name);
-      setAskingName(false);
-    } else {
-      setAuthError(true);
-      setAuthPassInput('');
-      vibrate([20, 60, 20, 60, 20]);
-      setTimeout(() => setAuthError(false), 600);
+  const handleAuthDigit = (digit) => {
+    vibrate(6);
+    const next = authPassInput + digit;
+    setAuthPassInput(next);
+    setAuthError(false);
+    if (next.length === 4) {
+      const found = APP_USERS.find(u => u.password === next);
+      if (found) {
+        setAuthed(true);
+        try {
+          localStorage.setItem('local_appAuthUser', found.name);
+          localStorage.setItem('local_baristaName', found.name);
+        } catch (e) {}
+        setBaristaName(found.name);
+        setAskingName(false);
+        vibrate([10, 60, 20]);
+      } else {
+        setAuthError(true);
+        vibrate([20, 60, 20, 60, 20]);
+        setTimeout(() => { setAuthPassInput(''); setAuthError(false); }, 600);
+      }
     }
+  };
+
+  const handleAuthDelete = () => {
+    vibrate(4);
+    setAuthPassInput(prev => prev.slice(0, -1));
+    setAuthError(false);
   };
 
   useEffect(() => {
@@ -377,15 +387,6 @@ function BaristaOrders() {
       window.storage.set('cartDraft', JSON.stringify(cart), true);
     } catch (e) {}
   }, [cart, loading]);
-
-  const saveName = async () => {
-    const name = nameInput.trim();
-    if (!name) return;
-    setBaristaName(name);
-    setAskingName(false);
-    try { await window.storage.set('baristaName', name, false); } catch (e) {}
-    showToast(`Привет, ${name}! 👋`);
-  };
 
   const handlePinDigit = (digit) => {
     vibrate(6);
@@ -722,79 +723,55 @@ function BaristaOrders() {
         background: 'radial-gradient(ellipse at 60% 30%, rgba(204,255,0,0.07) 0%, #060608 60%)',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        zIndex: 9999, padding: '0 28px',
+        zIndex: 9999, padding: '0 24px',
       }}>
-        <style>{`
-          @keyframes authIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        `}</style>
-
-        <div style={{ fontSize: 44, marginBottom: 18 }}>🔒</div>
-
+        <div style={{ fontSize: 40, marginBottom: 8 }}>🔒</div>
         <div style={{
           fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 24, fontWeight: 700,
+          fontSize: 22, fontWeight: 700,
           color: '#CCFF00', textAlign: 'center',
-          marginBottom: 8,
-          animation: 'authIn 0.6s ease both',
+          marginBottom: 28,
         }}>
           Вход в приложение
         </div>
-        <div style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 13, color: 'rgba(245,247,250,0.5)',
-          textAlign: 'center', marginBottom: 28,
-          animation: 'authIn 0.6s ease 0.15s both',
-        }}>
-          Введите ваш личный пароль
-        </div>
 
-        <input
-          value={authPassInput}
-          onChange={e => setAuthPassInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && tryLogin()}
-          placeholder="Пароль"
-          type="password"
-          inputMode="numeric"
-          autoFocus
-          style={{
-            width: '100%', maxWidth: 280,
-            background: 'rgba(255,255,255,0.08)',
-            border: authError ? '1.5px solid #FF3D5A' : '1.5px solid rgba(204,255,0,0.4)',
-            borderRadius: 20, padding: '15px 20px',
-            fontSize: 18, fontFamily: "'Inter', sans-serif",
-            fontWeight: 500, color: '#F5F7FA',
-            outline: 'none', textAlign: 'center',
-            letterSpacing: '4px',
-            marginBottom: 14,
-            animation: authError ? 'none' : 'authIn 0.6s ease 0.25s both',
-            transition: 'border-color 0.15s',
-          }}
-        />
-        {authError && (
-          <div style={{
-            color: '#FF3D5A', fontSize: 12, fontWeight: 600,
-            marginBottom: 14, fontFamily: "'Inter', sans-serif",
-          }}>
-            Неверный пароль
+        <div style={{ ...styles.pinWrap, paddingTop: 0 }}>
+          <div style={styles.pinSubtitle}>Введите ваш личный код</div>
+          <div style={styles.pinDots}>
+            {[0,1,2,3].map(i => (
+              <div key={i} style={{
+                ...styles.pinDot,
+                background: authError
+                  ? '#FF3D5A'
+                  : i < authPassInput.length
+                    ? '#CCFF00'
+                    : 'rgba(255,255,255,0.12)',
+                boxShadow: i < authPassInput.length && !authError
+                  ? '0 0 12px rgba(204,255,0,0.6)'
+                  : authError
+                    ? '0 0 12px rgba(255,61,90,0.6)'
+                    : 'none',
+                transform: authError ? 'scale(1.15)' : 'scale(1)',
+                transition: 'all 0.15s',
+              }} />
+            ))}
           </div>
-        )}
-        <button
-          onClick={tryLogin}
-          disabled={!authPassInput.trim()}
-          style={{
-            width: '100%', maxWidth: 280,
-            border: 'none',
-            background: authPassInput.trim() ? '#CCFF00' : 'rgba(255,255,255,0.08)',
-            borderRadius: 20, padding: '14px',
-            fontSize: 14, fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 700, color: authPassInput.trim() ? '#0A0A0F' : 'rgba(255,255,255,0.3)',
-            transition: 'all 0.2s',
-            boxShadow: authPassInput.trim() ? '0 0 24px rgba(204,255,0,0.35)' : 'none',
-            animation: 'authIn 0.6s ease 0.35s both',
-          }}
-        >
-          Войти →
-        </button>
+          <div style={styles.pinGrid}>
+            {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d, i) => (
+              d === '' ? <div key={i} /> :
+              <button
+                key={i}
+                onClick={() => d === '⌫' ? handleAuthDelete() : handleAuthDigit(d)}
+                style={{
+                  ...styles.pinKey,
+                  ...(d === '⌫' ? styles.pinKeyDel : {}),
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -872,80 +849,6 @@ function BaristaOrders() {
     );
   }
 
-  if (askingName) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0,
-        background: 'radial-gradient(ellipse at 60% 30%, rgba(204,255,0,0.07) 0%, #060608 60%)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        zIndex: 9999, padding: '0 28px',
-      }}>
-        <style>{`
-          @keyframes nameIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-        `}</style>
-
-        <div style={{ fontSize: 48, marginBottom: 20 }}>☕</div>
-
-        <div style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 26, fontWeight: 700,
-          color: '#CCFF00', textAlign: 'center',
-          marginBottom: 8,
-          animation: 'nameIn 0.6s ease both',
-        }}>
-          Как тебя зовут?
-        </div>
-        <div style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 14, color: 'rgba(245,247,250,0.5)',
-          textAlign: 'center', marginBottom: 32,
-          animation: 'nameIn 0.6s ease 0.15s both',
-        }}>
-          Напишем имя один раз — и будем обращаться лично
-        </div>
-
-        <input
-          value={nameInput}
-          onChange={e => setNameInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && saveName()}
-          placeholder="Твоё имя"
-          autoFocus
-          style={{
-            width: '100%', maxWidth: 320,
-            background: 'rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1.5px solid rgba(204,255,0,0.4)',
-            borderRadius: 20, padding: '16px 20px',
-            fontSize: 18, fontFamily: "'Inter', sans-serif",
-            fontWeight: 500, color: '#F5F7FA',
-            outline: 'none', textAlign: 'center',
-            marginBottom: 16,
-            animation: 'nameIn 0.6s ease 0.25s both',
-          }}
-        />
-        <button
-          onClick={saveName}
-          disabled={!nameInput.trim()}
-          style={{
-            width: '100%', maxWidth: 320,
-            border: 'none',
-            background: nameInput.trim() ? '#CCFF00' : 'rgba(255,255,255,0.08)',
-            borderRadius: 20, padding: '15px',
-            fontSize: 15, fontFamily: "'Space Grotesk', sans-serif",
-            fontWeight: 700, color: nameInput.trim() ? '#0A0A0F' : 'rgba(255,255,255,0.3)',
-            transition: 'all 0.2s',
-            boxShadow: nameInput.trim() ? '0 0 24px rgba(204,255,0,0.35)' : 'none',
-            animation: 'nameIn 0.6s ease 0.35s both',
-          }}
-        >
-          Начать работу →
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div style={styles.app}>
       <style>{`
@@ -1009,13 +912,9 @@ function BaristaOrders() {
               <h1 style={styles.headerTitle}>стойка</h1>
             </div>
             {baristaName && (
-              <button
-                onClick={() => { setNameInput(baristaName); setAskingName(true); }}
-                style={styles.nameChip}
-              >
+              <div style={styles.nameChip}>
                 <span style={styles.nameChipText}>{baristaName}</span>
-                <span style={styles.nameChipEdit}>✎</span>
-              </button>
+              </div>
             )}
           </div>
         </div>
@@ -1817,10 +1716,6 @@ const styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-  },
-  nameChipEdit: {
-    fontSize: 12,
-    color: 'rgba(204,255,0,0.6)',
   },
   headerLabel: {
     fontSize: 10,
