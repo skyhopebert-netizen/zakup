@@ -1,3 +1,4 @@
+
 // Glass effect constants
 const GLASS_SM = { backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' };
 const GLASS_MD = { backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)' };
@@ -46,6 +47,16 @@ function uid() {
 
 // Расписание доставки по поставщикам: days — рабочие дни недели (1=Пн...7=Вс, null = каждый день),
 // excludeDay — день недели, когда поставщик НЕ работает (для "каждый день кроме вторника"), deadline — крайний час приёма заказа
+// Список сотрудников с личными паролями для входа в приложение.
+// isChief: true — шеф-бариста (используется только для пометки, доступ к статистике
+// всё равно защищён отдельным пин-кодом внутри раздела «Статистика»)
+const APP_USERS = [
+  { name: 'Вика', password: '0003' },
+  { name: 'Вероника', password: '0002' },
+  { name: 'Влад', password: '0001' },
+  { name: 'Артём', password: '2217', isChief: true },
+];
+
 const SUPPLIERS = {
   'Метро':       { days: [1,2,3,4,5], excludeDay: null, deadline: 20 },
   'Винокуров':   { days: [1,2,3,4,5], excludeDay: null, deadline: 16 },
@@ -230,6 +241,11 @@ const GREETINGS = [
 const SPLASH = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
 function BaristaOrders() {
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const [authPassInput, setAuthPassInput] = useState('');
+  const [authError, setAuthError] = useState(false);
+
   const [catalog, setCatalog] = useState([]);
   const [cart, setCart] = useState({});
   const [orders, setOrders] = useState([]);
@@ -255,6 +271,37 @@ function BaristaOrders() {
   const [toast, setToast] = useState(null);
   const [lastSentOrder, setLastSentOrder] = useState(null);
   const [scrollY, setScrollY] = useState(0);
+
+  // Проверяем, был ли вход на этом устройстве ранее (пароль сохраняется локально)
+  useEffect(() => {
+    try {
+      const savedAuth = localStorage.getItem('local_appAuthUser');
+      if (savedAuth && APP_USERS.some(u => u.name === savedAuth)) {
+        setAuthed(true);
+      }
+    } catch (e) {}
+    setAuthChecked(true);
+  }, []);
+
+  const tryLogin = () => {
+    const pass = authPassInput.trim();
+    const found = APP_USERS.find(u => u.password === pass);
+    if (found) {
+      setAuthed(true);
+      setAuthError(false);
+      try {
+        localStorage.setItem('local_appAuthUser', found.name);
+        localStorage.setItem('local_baristaName', found.name);
+      } catch (e) {}
+      setBaristaName(found.name);
+      setAskingName(false);
+    } else {
+      setAuthError(true);
+      setAuthPassInput('');
+      vibrate([20, 60, 20, 60, 20]);
+      setTimeout(() => setAuthError(false), 600);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -663,6 +710,94 @@ function BaristaOrders() {
     setLastSentOrder(order);
     setView('receipt');
   };
+
+  if (!authChecked) {
+    return <div style={{ position: 'fixed', inset: 0, background: '#0A0A0F' }} />;
+  }
+
+  if (!authed) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0,
+        background: 'radial-gradient(ellipse at 60% 30%, rgba(204,255,0,0.07) 0%, #060608 60%)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        zIndex: 9999, padding: '0 28px',
+      }}>
+        <style>{`
+          @keyframes authIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        `}</style>
+
+        <div style={{ fontSize: 44, marginBottom: 18 }}>🔒</div>
+
+        <div style={{
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontSize: 24, fontWeight: 700,
+          color: '#CCFF00', textAlign: 'center',
+          marginBottom: 8,
+          animation: 'authIn 0.6s ease both',
+        }}>
+          Вход в приложение
+        </div>
+        <div style={{
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13, color: 'rgba(245,247,250,0.5)',
+          textAlign: 'center', marginBottom: 28,
+          animation: 'authIn 0.6s ease 0.15s both',
+        }}>
+          Введите ваш личный пароль
+        </div>
+
+        <input
+          value={authPassInput}
+          onChange={e => setAuthPassInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && tryLogin()}
+          placeholder="Пароль"
+          type="password"
+          inputMode="numeric"
+          autoFocus
+          style={{
+            width: '100%', maxWidth: 280,
+            background: 'rgba(255,255,255,0.08)',
+            border: authError ? '1.5px solid #FF3D5A' : '1.5px solid rgba(204,255,0,0.4)',
+            borderRadius: 20, padding: '15px 20px',
+            fontSize: 18, fontFamily: "'Inter', sans-serif",
+            fontWeight: 500, color: '#F5F7FA',
+            outline: 'none', textAlign: 'center',
+            letterSpacing: '4px',
+            marginBottom: 14,
+            animation: authError ? 'none' : 'authIn 0.6s ease 0.25s both',
+            transition: 'border-color 0.15s',
+          }}
+        />
+        {authError && (
+          <div style={{
+            color: '#FF3D5A', fontSize: 12, fontWeight: 600,
+            marginBottom: 14, fontFamily: "'Inter', sans-serif",
+          }}>
+            Неверный пароль
+          </div>
+        )}
+        <button
+          onClick={tryLogin}
+          disabled={!authPassInput.trim()}
+          style={{
+            width: '100%', maxWidth: 280,
+            border: 'none',
+            background: authPassInput.trim() ? '#CCFF00' : 'rgba(255,255,255,0.08)',
+            borderRadius: 20, padding: '14px',
+            fontSize: 14, fontFamily: "'Space Grotesk', sans-serif",
+            fontWeight: 700, color: authPassInput.trim() ? '#0A0A0F' : 'rgba(255,255,255,0.3)',
+            transition: 'all 0.2s',
+            boxShadow: authPassInput.trim() ? '0 0 24px rgba(204,255,0,0.35)' : 'none',
+            animation: 'authIn 0.6s ease 0.35s both',
+          }}
+        >
+          Войти →
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
