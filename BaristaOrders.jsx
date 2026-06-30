@@ -1,4 +1,3 @@
-
 // Glass effect constants
 const GLASS_SM = { backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' };
 const GLASS_MD = { backdropFilter: 'blur(16px) saturate(180%)', WebkitBackdropFilter: 'blur(16px) saturate(180%)' };
@@ -6,7 +5,26 @@ const GLASS_LG = { backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFi
 const GLASS_NAV = { backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)' };
 
 const { useState, useEffect, useCallback } = React;
-const { Search, Plus, Minus, Send, Check, X, Package, ShoppingCart, ChevronLeft, Flag, RotateCcw, Copy } = LucideReact;
+// Простые SVG-иконки (замена lucide-react, чтобы не тянуть внешнюю UMD-сборку,
+// несовместимую с React при подключении напрямую через <script> теги)
+const Icon = ({ children, size = 18, color = 'currentColor', fill = 'none', style, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color}
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style} {...rest}>
+    {children}
+  </svg>
+);
+const Search = (props) => <Icon {...props}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></Icon>;
+const Plus = (props) => <Icon {...props}><path d="M5 12h14" /><path d="M12 5v14" /></Icon>;
+const Minus = (props) => <Icon {...props}><path d="M5 12h14" /></Icon>;
+const Send = (props) => <Icon {...props}><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></Icon>;
+const Check = (props) => <Icon {...props}><path d="M20 6 9 17l-5-5" /></Icon>;
+const X = (props) => <Icon {...props}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></Icon>;
+const Package = (props) => <Icon {...props}><path d="m7.5 4.27 9 5.15" /><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></Icon>;
+const ShoppingCart = (props) => <Icon {...props}><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></Icon>;
+const ChevronLeft = (props) => <Icon {...props}><path d="m15 18-6-6 6-6" /></Icon>;
+const Flag = (props) => <Icon {...props}><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 8 2a6 6 0 0 0 3.6-1.2A1 1 0 0 1 21 3.7v10.6a1 1 0 0 1-.4.8A6 6 0 0 1 17 16c-3 0-5-2-8-2a6 6 0 0 0-5 1.5" /></Icon>;
+const RotateCcw = (props) => <Icon {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></Icon>;
+const Copy = (props) => <Icon {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></Icon>;
 
 const UNITS = ['кг', 'г', 'л', 'мл', 'шт'];
 
