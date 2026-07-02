@@ -916,6 +916,18 @@ function BaristaOrders() {
                   <span style={styles.nameChipText}>{baristaName}</span>
                 </div>
                 <button
+                  onClick={async () => {
+                    if (window.setupPush) {
+                      await window.setupPush();
+                      showToast('Уведомления настроены ✓');
+                    }
+                  }}
+                  style={styles.bellBtn}
+                  title="Включить уведомления"
+                >
+                  <span style={{ fontSize: 14 }}>🔔</span>
+                </button>
+                <button
                   onClick={() => {
                     try {
                       localStorage.removeItem('local_appAuthUser');
@@ -1723,6 +1735,18 @@ const styles = {
     padding: '7px 12px',
     marginTop: 4,
     flexShrink: 0,
+  },
+  bellBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    border: '1px solid rgba(204,255,0,0.3)',
+    background: 'rgba(204,255,0,0.08)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 4,
   },
   logoutBtn: {
     width: 30,
