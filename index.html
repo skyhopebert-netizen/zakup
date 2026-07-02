@@ -214,9 +214,19 @@ async function setupPush() {
   }
 }
 
-// Запускаем настройку push после загрузки страницы
-window.addEventListener('load', () => {
-  setTimeout(setupPush, 3000); // небольшая задержка чтобы приложение успело загрузиться
+// Делаем setupPush глобальной — вызывается по нажатию кнопки в приложении
+window.setupPush = setupPush;
+
+// При загрузке только регистрируем SW, без запроса разрешения
+window.addEventListener('load', async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('/zakup/sw.js');
+      console.log('[SW] Зарегистрирован');
+    } catch (e) {
+      console.warn('[SW] Ошибка:', e.message);
+    }
+  }
 });
 </script>
 
