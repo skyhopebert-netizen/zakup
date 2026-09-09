@@ -239,6 +239,97 @@ const GREETINGS = [
 
 const SPLASH = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
+const CL_ALL = [1,2,3,4,5,6,7];
+const CL_DAYS_FULL = ['', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
+
+const CL_SECTIONS = [
+  { id:'open', title:'Открытие смены', icon:'🌅', accent:'#FF6B35', tasks:[
+    { g:'9:30', t:'Включить свет в зале — чтоб не было лишнего света и не темно' },
+    { g:'9:30', t:'Включить кофемолки' },
+    { g:'9:30', t:'Включить бойлер' },
+    { g:'9:45', t:'Включить пение птичек — под кассой, блютуз с рабочего телефона' },
+    { g:'9:45', t:'Приготовить фильтр' },
+    { g:'9:50', t:'Привести внешний вид в порядок' },
+    { g:'9:50', t:'Переодеться — быть в форме' },
+    { g:'9:55', t:'Открыть кассовую смену' },
+    { g:'9:55', t:'Настроить помол и прислать данные о настройке в чат' },
+    { g:'10:10', t:'Отписать в группу с официантами, какое зерно под фильтр сегодня, и дескрипторы' }
+  ]},
+  { id:'day', title:'Чек-лист дня', icon:'📋', accent:'#CCFF00', tasks:[
+    { g:'Утренняя смена', t:'Заказ молока', at:'будни — до 16:00' },
+    { g:'Утренняя смена', t:'Заказ воды Petroglyph', at:'будни — до 16:00' },
+    { g:'Утренняя смена', t:'Пополнить все хозы' },
+    { g:'Утренняя смена', t:'Проверить маркировки и количество заготовок, при необходимости заготовить' },
+    { g:'Утренняя смена', t:'Нарезка фруктов и очистка мяты' },
+    { g:'Утренняя смена', t:'Заготовить п/ф какао и матчи' },
+    { g:'Утренняя смена', t:'Бракераж апельсинов при отжиме фреша — скинуть в чат вход апельсинов и выход фреша' },
+    { g:'Утренняя смена', t:'Настроить эспрессо после 16:00', at:'16:00' },
+    { g:'Утренняя смена', t:'Заказ расходников' },
+    { g:'Вечерняя смена', t:'Пополнение молока', at:'12:00–17:00' },
+    { g:'Вечерняя смена', t:'Списание в течение дня' },
+    { g:'Вечерняя смена', t:'Заказ продуктов' },
+    { g:'Вечерняя смена', t:'Максимально затарить и натереть посуду на утро', at:'21:20' }
+  ]},
+  { id:'weekly', title:'Уборка по графику', icon:'🗓️', accent:'#00D9FF', weekly:true, tasks:[
+    { t:'Замывка групп кофемашины химией, со снятием сеток', days:[1,5] },
+    { t:'Чистка кофемолок Mahlkonig (эспрессо)', days:[1] },
+    { t:'Протереть витрину на баре маленькую, внутри и снаружи', days:[1,4] },
+    { t:'Разморозка морозилки', days:[2] },
+    { t:'Спустить хозы со склада и проконтролировать наличие', days:[2,5] },
+    { t:'Протереть полки в зоне мусорных баков', days:[2] },
+    { t:'Пополнить чаи и сыпучие', days:[3,6] },
+    { t:'Вымыть холодильники, резинки на дверцах и под холодильниками', days:[3,6] },
+    { t:'Убрать в выдвижных ящиках', days:[7] },
+    { t:'Промыть ледогенератор', days:[7] },
+    { t:'Протереть все поверхности со средством p-504', days:CL_ALL },
+    { t:'Почистить резиновые коврики', days:CL_ALL },
+    { t:'Протереть полки', days:CL_ALL }
+  ]},
+  { id:'close', title:'Закрытие смены', icon:'🌙', accent:'#B967FF', tasks:[
+    { g:'20:30', t:'Помыть пит-стопы (резиновые коврики) щёткой и гелем' },
+    { g:'20:30', t:'Протереть поверхность под пит-стопами' },
+    { g:'20:40', t:'Развести химию: одна крышка раствора на 800 мл кипятка' },
+    { g:'20:40', t:'Замочить холдеры на 15 минут в горячей воде с химией' },
+    { g:'20:40', t:'Промыть носики форсунок паровых трубок' },
+    { g:'20:40', t:'Промыть форсунки этим раствором' },
+    { g:'20:40', t:'Промыть Изи-Милк тем же раствором, что и форсунки' },
+    { g:'20:40', t:'Пропустить всю жидкость и повторить процедуру уже чистой горячей водой' },
+    { g:'20:50', t:'Протереть поверхности рядом с кофемолками' },
+    { g:'20:50', t:'Убрать гранулы кофе с поверхности мульти-пылесосом' },
+    { g:'21:00', t:'Помыть питчеры и ёмкости для ложек и молотого кофе' },
+    { g:'21:00', t:'Протереть поверхности' },
+    { g:'21:10', t:'Разложить все принадлежности в холодной зоне по местам' },
+    { g:'21:10', t:'Натереть посуду и разложить обратно после того, как пит-стопы полностью высохнут, посуду для следующей смены' },
+    { g:'21:20', t:'Выбросить мусор' },
+    { g:'21:20', t:'Протереть полки для баков, если нужно' },
+    { g:'21:20', t:'Поменять пакеты на новые' },
+    { g:'21:30', t:'Замыть кофемашину: химия 1–1,5 гр через слепой холдер, 5 раз' },
+    { g:'21:30', t:'Пропустить чистую воду через слепой холдер, 5 раз' },
+    { g:'21:30', t:'Помыть поддон и решётки' },
+    { g:'21:30', t:'Протереть кофемашину без разводов' },
+    { g:'21:45', t:'Расставить весь инвентарь по местам' },
+    { g:'21:45', t:'Финально протереть весь бар' },
+    { g:'21:45', t:'Замочить тряпки' },
+    { g:'21:55', t:'Пересчитать кассу' },
+    { g:'21:55', t:'Начать готовить отчёты' },
+    { g:'22:00', t:'Снять остатки всех десертов с витрины и прислать в группу со списаниями' },
+    { g:'22:00', t:'Полностью закрыть кассу' },
+    { g:'22:00', t:'Отчёты и наличные в конверте подписать и положить в сейф' },
+    { g:'22:00', t:'Написать в чат, что спустить со склада и что заканчивается' },
+    { g:'22:05', t:'Выключить бойлер' },
+    { g:'22:05', t:'Выключить свет в витринах' },
+    { g:'22:05', t:'Отключить телевизоры и выключить музыку' },
+    { g:'22:05', t:'Поставить на зарядку всё, что нужно' }
+  ]}
+];
+
+function clDayNum(d = new Date()) { const n = d.getDay(); return n === 0 ? 7 : n; }
+function clDateKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function clTaskId(sectionId, i) { return `${sectionId}:${i}`; }
+function clTime(iso) { return new Date(iso).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }); }
+
 function BaristaOrders() {
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
@@ -270,6 +361,100 @@ function BaristaOrders() {
   const [toast, setToast] = useState(null);
   const [lastSentOrder, setLastSentOrder] = useState(null);
   const [scrollY, setScrollY] = useState(0);
+
+  const [clMarks, setClMarks] = useState({});
+  const [clLoading, setClLoading] = useState(false);
+  const [clHistory, setClHistory] = useState([]);
+  const [clHistoryOpen, setClHistoryOpen] = useState(null);
+  const clToday = clDayNum();
+  const clDate = clDateKey();
+  const clMarksKey = `checklist_${clDate}`;
+
+  const clVisible = (s) =>
+    s.tasks.map((t, i) => ({ task: t, i }))
+           .filter(x => !s.weekly || x.task.days.includes(clToday));
+
+  const loadChecklist = useCallback(async () => {
+    setClLoading(true);
+    try {
+      const r = await window.storage.get(`checklist_${clDateKey()}`, true);
+      setClMarks(r && r.value ? JSON.parse(r.value) : {});
+    } catch (e) { setClMarks({}); }
+    setClLoading(false);
+  }, []);
+
+  const loadClHistory = useCallback(async () => {
+    try {
+      const list = await window.storage.list('checklist_', true);
+      const dates = ((list && list.keys) || [])
+        .map(k => k.replace('checklist_', ''))
+        .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
+        .sort().reverse().slice(0, 30);
+
+      const days = [];
+      for (const dateStr of dates) {
+        let marks = {};
+        try {
+          const r = await window.storage.get(`checklist_${dateStr}`, true);
+          marks = r && r.value ? JSON.parse(r.value) : {};
+        } catch (e) { continue; }
+        const dow = clDayNum(new Date(dateStr + 'T00:00:00'));
+        let total = 0, done = 0;
+        const sections = CL_SECTIONS.map(s => {
+          const items = s.weekly
+            ? s.tasks.map((t, i) => ({ t, i })).filter(x => x.t.days.includes(dow))
+            : s.tasks.map((t, i) => ({ t, i }));
+          const d = items.filter(x => marks[clTaskId(s.id, x.i)]).length;
+          total += items.length; done += d;
+          const missed = items.filter(x => !marks[clTaskId(s.id, x.i)]).map(x => x.t.t);
+          return { id: s.id, title: s.title, accent: s.accent, done: d, total: items.length, missed };
+        });
+        if (total > 0) days.push({ date: dateStr, dow, done, total, sections });
+      }
+      setClHistory(days);
+    } catch (e) { setClHistory([]); }
+  }, []);
+
+  useEffect(() => {
+    if (view === 'clean') loadChecklist();
+  }, [view, loadChecklist]);
+
+  useEffect(() => {
+    if (view === 'stats' && pinUnlocked) loadClHistory();
+  }, [view, pinUnlocked, loadClHistory]);
+
+  const clToggle = async (id) => {
+    const prev = clMarks;
+    const next = { ...clMarks };
+    if (next[id]) { delete next[id]; vibrate(6); }
+    else { next[id] = { at: new Date().toISOString() }; vibrate([8, 40, 12]); }
+    setClMarks(next);
+    try {
+      await window.storage.set(clMarksKey, JSON.stringify(next), true);
+    } catch (e) {
+      setClMarks(prev);
+      showToast('Отметка не сохранилась — проверь связь');
+    }
+  };
+
+  const clResetSection = async (section) => {
+    const next = { ...clMarks };
+    section.tasks.forEach((_, i) => { delete next[clTaskId(section.id, i)]; });
+    setClMarks(next);
+    try {
+      await window.storage.set(clMarksKey, JSON.stringify(next), true);
+      vibrate(10);
+      showToast('Отметки сняты');
+    } catch (e) { showToast('Не удалось снять отметки'); }
+  };
+
+  const clTotals = CL_SECTIONS.reduce((acc, s) => {
+    clVisible(s).forEach(x => {
+      acc.total += 1;
+      if (clMarks[clTaskId(s.id, x.i)]) acc.done += 1;
+    });
+    return acc;
+  }, { done: 0, total: 0 });
 
   // Проверяем, был ли вход на этом устройстве ранее (пароль сохраняется локально)
   useEffect(() => {
@@ -976,6 +1161,12 @@ function BaristaOrders() {
             График
           </button>
           <button
+            onClick={() => { setView('clean'); setPinUnlocked(false); setPinInput(''); }}
+            style={{ ...styles.navBtn, ...(view === 'clean' ? styles.navBtnActive : {}) }}
+          >
+            Чек-лист
+          </button>
+          <button
             onClick={() => { setView('cart'); setPinUnlocked(false); setPinInput(''); }}
             style={{ ...styles.navBtn, ...styles.navBtnCart, ...(view === 'cart' ? styles.navBtnActive : {}) }}
           >
@@ -1366,6 +1557,82 @@ function BaristaOrders() {
             </div>
           )}
         </main>
+      ) : view === 'clean' ? (
+        <main style={styles.main}>
+          <p style={styles.eyebrowSection}>Смена</p>
+          <h2 style={styles.sectionTitle}>Чек-лист — {CL_DAYS_FULL[clToday]}</h2>
+
+          {clLoading && <div style={{ color: '#8A8A9A', fontSize: 13 }}>Загружаем…</div>}
+
+          {CL_SECTIONS.map(section => {
+            const items = clVisible(section);
+            if (!items.length) return null;
+            const done = items.filter(x => clMarks[clTaskId(section.id, x.i)]).length;
+            const pct = Math.round(done / items.length * 100);
+            let lastG = null;
+
+            return (
+              <div key={section.id} style={{ ...styles.suppCard, marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 18 }}>{section.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, color: '#F5F7FA' }}>{section.title}</div>
+                    <div style={{ fontSize: 10, color: '#8A8A9A' }}>{section.weekly ? CL_DAYS_FULL[clToday] : 'каждый день'}</div>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: done === items.length ? section.accent : '#8A8A9A' }}>{done}/{items.length}</span>
+                </div>
+                <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', marginBottom: 10 }}>
+                  <div style={{ height: '100%', borderRadius: 2, width: `${pct}%`, background: section.accent }} />
+                </div>
+
+                {items.map(({ task, i }) => {
+                  const id = clTaskId(section.id, i);
+                  const mark = clMarks[id];
+                  const showG = task.g && task.g !== lastG;
+                  if (task.g) lastG = task.g;
+                  const isTime = task.g && /^\d{1,2}:\d{2}$/.test(task.g);
+                  return (
+                    <React.Fragment key={id}>
+                      {showG && (
+                        <div style={{ fontSize: isTime ? 13 : 10, fontWeight: isTime ? 700 : 600, color: isTime ? '#fff' : '#8A8A9A', textTransform: isTime ? 'none' : 'uppercase', letterSpacing: isTime ? 0 : '1px', margin: '10px 0 4px' }}>
+                          {task.g}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => clToggle(id)}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: 9, width: '100%', textAlign: 'left',
+                          padding: '9px 10px', borderRadius: 10, marginBottom: 5, border: '1px solid',
+                          borderColor: mark ? section.accent + '55' : 'rgba(255,255,255,0.08)',
+                          background: mark ? section.accent + '14' : 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <span style={{
+                          width: 17, height: 17, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                          border: `1.5px solid ${mark ? section.accent : 'rgba(255,255,255,0.25)'}`,
+                          background: mark ? section.accent : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {mark && <Check size={11} color="#0A0A0F" />}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, color: mark ? '#8A8A9A' : '#F5F7FA', textDecoration: mark ? 'line-through' : 'none' }}>{task.t}</span>
+                          {task.at && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, color: section.accent }}>{task.at}</span>}
+                        </span>
+                      </button>
+                    </React.Fragment>
+                  );
+                })}
+
+                {done > 0 && (
+                  <button onClick={() => clResetSection(section)} style={{ ...styles.changePinBtn, marginTop: 8, padding: '6px 14px' }}>
+                    Снять отметки
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </main>
       ) : null}
 
       {view === 'stats' && !pinUnlocked && (
@@ -1536,6 +1803,45 @@ function BaristaOrders() {
                 ))}
               </>
             )}
+
+            <div style={{ ...styles.activityLabel, marginTop: 24 }}>История чек-листа</div>
+            {clHistory.length === 0 && (
+              <div style={{ fontSize: 12, color: '#8A8A9A', padding: '10px 0' }}>Пока нет отметок ни по одному дню</div>
+            )}
+            {clHistory.map(day => {
+              const pct = Math.round(day.done / day.total * 100);
+              const open = clHistoryOpen === day.date;
+              const label = `${CL_DAYS_FULL[day.dow]}, ${new Date(day.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' })}`;
+              return (
+                <div key={day.date} style={styles.supStatCard}>
+                  <button
+                    onClick={() => setClHistoryOpen(open ? null : day.date)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 'none', textAlign: 'left', padding: 0 }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <div style={styles.supStatName}>{label}</div>
+                      <div style={{ fontSize: 11, color: '#8A8A9A', marginTop: 2 }}>{day.done} из {day.total} пунктов</div>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: pct === 100 ? '#CCFF00' : '#8A8A9A' }}>{pct}%</span>
+                  </button>
+                  {open && (
+                    <div style={{ marginTop: 10 }}>
+                      {day.sections.filter(s => s.total > 0).map(sec => (
+                        <div key={sec.id} style={{ marginBottom: 10 }}>
+                          <div style={{ fontSize: 10, color: '#8A8A9A', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                            {sec.title} — {sec.done}/{sec.total}
+                          </div>
+                          {sec.missed.map((m, i) => (
+                            <div key={i} style={{ fontSize: 12, color: '#FF3D5A', padding: '2px 0' }}>{m}</div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
             <button
               onClick={() => { setShowChangePinModal(true); setNewPinInput(''); }}
               style={styles.changePinBtn}
@@ -1805,9 +2111,12 @@ const styles = {
     borderRadius: 22,
     padding: 5,
     boxShadow: '0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    scrollbarWidth: 'none',
   },
   navBtn: {
-    flex: 1,
+    flex: '1 0 auto',
     background: 'transparent',
     border: 'none',
     color: 'rgba(245,247,250,0.55)',
@@ -1816,7 +2125,7 @@ const styles = {
     fontWeight: 600,
     letterSpacing: '0.3px',
     textTransform: 'uppercase',
-    padding: '10px 4px',
+    padding: '10px 8px',
     whiteSpace: 'nowrap',
     position: 'relative',
     borderRadius: 17,
