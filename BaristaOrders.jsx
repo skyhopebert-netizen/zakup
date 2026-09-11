@@ -51,11 +51,9 @@ function uid() {
 // в базе через verify_staff_login (пароли нигде в этом файле не хранятся).
 const STAFF_NAMES = ['Вика', 'Илья', 'Амир', 'Артём'];
 
-// Те же URL и ключ, что используются в index.html для window.storage —
-// скопируй их оттуда один в один.
-const SUPABASE_URL = 'https://whselnzhzbvxtkncausz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_PChhLBXS8la2mQUFa6AMwQ_jlqptKdI';
-
+// SUPABASE_URL и SUPABASE_KEY уже объявлены в index.html (в скрипте window.storage)
+// и доступны здесь как глобальные переменные страницы — заново их объявлять нельзя,
+// это и вызывало "Can't create duplicate variable".
 async function supabaseRpc(fn, args) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: 'POST',
