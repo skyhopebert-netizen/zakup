@@ -46,15 +46,29 @@ function uid() {
 
 // Расписание доставки по поставщикам: days — рабочие дни недели (1=Пн...7=Вс, null = каждый день),
 // excludeDay — день недели, когда поставщик НЕ работает (для "каждый день кроме вторника"), deadline — крайний час приёма заказа
-// Список сотрудников с личными паролями для входа в приложение.
-// isChief: true — шеф-бариста (используется только для пометки, доступ к статистике
-// всё равно защищён отдельным пин-кодом внутри раздела «Статистика»)
-const APP_USERS = [
-  { name: 'Вика', password: '0003' },
-  { name: 'Вероника', password: '0002' },
-  { name: 'Влад', password: '0001' },
-  { name: 'Артём', password: '2217', isChief: true },
-];
+// Имена сотрудников — не секрет, нужны только чтобы проверить сохранённый
+// локально вход на этом устройстве. Настоящая проверка пароля происходит
+// в базе через verify_staff_login (пароли нигде в этом файле не хранятся).
+const STAFF_NAMES = ['Вика', 'Илья', 'Амир', 'Артём'];
+
+// Те же URL и ключ, что используются в index.html для window.storage —
+// скопируй их оттуда один в один.
+const SUPABASE_URL = 'https://whselnzhzbvxtkncausz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_PChhLBXS8la2mQUFa6AMwQ_jlqptKdI';
+
+async function supabaseRpc(fn, args) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+    },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error('rpc failed');
+  return res.json();
+}
 
 const SUPPLIERS = {
   'Метро':       { days: [1,2,3,4,5], excludeDay: null, deadline: 20 },
@@ -351,7 +365,7 @@ function BaristaOrders() {
   const [pinError, setPinError] = useState(false);
   const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [newPinInput, setNewPinInput] = useState('');
-  const [savedPin, setSavedPin] = useState('2222');
+  const [savedPin, setSavedPin] = useState(''); // больше не хранит настоящий пин, только служебное значение для смены
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newUnit, setNewUnit] = useState('кг');
@@ -460,7 +474,7 @@ function BaristaOrders() {
   useEffect(() => {
     try {
       const savedAuth = localStorage.getItem('local_appAuthUser');
-      if (savedAuth && APP_USERS.some(u => u.name === savedAuth)) {
+      if (savedAuth && STAFF_NAMES.includes(savedAuth)) {
         setAuthed(true);
       }
     } catch (e) {}
@@ -473,14 +487,21 @@ function BaristaOrders() {
     setAuthPassInput(next);
     setAuthError(false);
     if (next.length === 4) {
-      const found = APP_USERS.find(u => u.password === next);
-      if (found) {
+      verifyLogin(next);
+    }
+  };
+
+  const verifyLogin = async (attempt) => {
+    try {
+      const data = await supabaseRpc('verify_staff_login', { attempt });
+      if (data && data.length > 0) {
+        const found = data[0];
         setAuthed(true);
         try {
-          localStorage.setItem('local_appAuthUser', found.name);
-          localStorage.setItem('local_baristaName', found.name);
+          localStorage.setItem('local_appAuthUser', found.out_name);
+          localStorage.setItem('local_baristaName', found.out_name);
         } catch (e) {}
-        setBaristaName(found.name);
+        setBaristaName(found.out_name);
         setAskingName(false);
         vibrate([10, 60, 20]);
       } else {
@@ -488,6 +509,10 @@ function BaristaOrders() {
         vibrate([20, 60, 20, 60, 20]);
         setTimeout(() => { setAuthPassInput(''); setAuthError(false); }, 600);
       }
+    } catch (e) {
+      setAuthError(true);
+      vibrate([20, 60, 20, 60, 20]);
+      setTimeout(() => { setAuthPassInput(''); setAuthError(false); }, 600);
     }
   };
 
@@ -543,10 +568,6 @@ function BaristaOrders() {
         setAskingName(true);
       }
       try {
-        const p = await window.storage.get('statsPin', true);
-        if (p && p.value) setSavedPin(p.value);
-      } catch (e) {}
-      try {
         const draft = await window.storage.get('cartDraft', true);
         if (draft && draft.value) {
           const parsed = JSON.parse(draft.value);
@@ -578,8 +599,16 @@ function BaristaOrders() {
     setPinInput(next);
     setPinError(false);
     if (next.length === 4) {
-      if (next === savedPin) {
+      verifyStatsPin(next);
+    }
+  };
+
+  const verifyStatsPin = async (attempt) => {
+    try {
+      const ok = await supabaseRpc('verify_stats_pin', { attempt });
+      if (ok === true) {
         setPinUnlocked(true);
+        setSavedPin(attempt); // временно держим в памяти для смены пина в этой сессии
         setPinInput('');
         vibrate([10, 60, 20]);
       } else {
@@ -587,6 +616,9 @@ function BaristaOrders() {
         vibrate([20, 60, 20, 60, 20]);
         setTimeout(() => { setPinInput(''); setPinError(false); }, 600);
       }
+    } catch (e) {
+      setPinError(true);
+      setTimeout(() => { setPinInput(''); setPinError(false); }, 600);
     }
   };
 
@@ -602,11 +634,19 @@ function BaristaOrders() {
       showToast('Введите ровно 4 цифры');
       return;
     }
-    setSavedPin(pin);
-    setNewPinInput('');
-    setShowChangePinModal(false);
-    try { await window.storage.set('statsPin', pin, true); } catch (e) {}
-    showToast('Пин-код изменён');
+    try {
+      const ok = await supabaseRpc('update_stats_pin', { old_attempt: savedPin, new_pin: pin });
+      if (ok) {
+        setSavedPin(pin);
+        setNewPinInput('');
+        setShowChangePinModal(false);
+        showToast('Пин-код изменён');
+      } else {
+        showToast('Не удалось сменить пин-код — проверь текущий доступ');
+      }
+    } catch (e) {
+      showToast('Не удалось сменить пин-код');
+    }
   };
 
   const saveCatalog = async (next) => {
