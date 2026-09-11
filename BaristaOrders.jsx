@@ -926,6 +926,11 @@ function BaristaOrders() {
     };
     const next = [order, ...orders];
     await saveOrders(next);
+    fetch('https://zakup-push.onrender.com/order-sent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baristaName, itemsCount: cartItems.length }),
+    }).catch(() => {});
     vibrate([15, 80, 15, 80, 30]);
     playApplePaySound();
     setCart({});
