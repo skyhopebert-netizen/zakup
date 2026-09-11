@@ -255,7 +255,7 @@ const CL_ALL = [1,2,3,4,5,6,7];
 const CL_DAYS_FULL = ['', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
 
 const CL_SECTIONS = [
-  { id:'open', title:'Открытие смены', icon:'🌅', accent:'#FF6B35', tasks:[
+  { id:'open', title:'Открытие смены', accent:'#FF6B35', tasks:[
     { g:'9:30', t:'Включить свет в зале — чтоб не было лишнего света и не темно' },
     { g:'9:30', t:'Включить кофемолки' },
     { g:'9:30', t:'Включить бойлер' },
@@ -267,7 +267,7 @@ const CL_SECTIONS = [
     { g:'9:55', t:'Настроить помол и прислать данные о настройке в чат' },
     { g:'10:10', t:'Отписать в группу с официантами, какое зерно под фильтр сегодня, и дескрипторы' }
   ]},
-  { id:'day', title:'Чек-лист дня', icon:'📋', accent:'#CCFF00', tasks:[
+  { id:'day', title:'Чек-лист дня', accent:'#CCFF00', tasks:[
     { g:'Утренняя смена', t:'Заказ молока', at:'будни — до 16:00' },
     { g:'Утренняя смена', t:'Заказ воды Petroglyph', at:'будни — до 16:00' },
     { g:'Утренняя смена', t:'Пополнить все хозы' },
@@ -282,7 +282,7 @@ const CL_SECTIONS = [
     { g:'Вечерняя смена', t:'Заказ продуктов' },
     { g:'Вечерняя смена', t:'Максимально затарить и натереть посуду на утро', at:'21:20' }
   ]},
-  { id:'weekly', title:'Уборка по графику', icon:'🗓️', accent:'#00D9FF', weekly:true, tasks:[
+  { id:'weekly', title:'Уборка по графику', accent:'#00D9FF', weekly:true, tasks:[
     { t:'Замывка групп кофемашины химией, со снятием сеток', days:[1,5] },
     { t:'Чистка кофемолок Mahlkonig (эспрессо)', days:[1] },
     { t:'Протереть витрину на баре маленькую, внутри и снаружи', days:[1,4] },
@@ -297,7 +297,7 @@ const CL_SECTIONS = [
     { t:'Почистить резиновые коврики', days:CL_ALL },
     { t:'Протереть полки', days:CL_ALL }
   ]},
-  { id:'close', title:'Закрытие смены', icon:'🌙', accent:'#B967FF', tasks:[
+  { id:'close', title:'Закрытие смены', accent:'#B967FF', tasks:[
     { g:'20:30', t:'Помыть пит-стопы (резиновые коврики) щёткой и гелем' },
     { g:'20:30', t:'Протереть поверхность под пит-стопами' },
     { g:'20:40', t:'Развести химию: одна крышка раствора на 800 мл кипятка' },
@@ -341,41 +341,6 @@ function clDateKey(d = new Date()) {
 }
 function clTaskId(sectionId, i) { return `${sectionId}:${i}`; }
 function clTime(iso) { return new Date(iso).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }); }
-
-function schMondayOf(d) {
-  const day = clDayNum(d); // 1..7, Пн=1
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - (day - 1));
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
-
-// ─── Табель: учёт времени и зарплата ─────────────────────
-const HOURLY_RATE = 450; // рублей в час, одна ставка на всех
-
-function tlDateKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-function tlHoursBetween(inStr, outStr) {
-  if (!inStr || !outStr) return null;
-  const [ih, im] = inStr.split(':').map(Number);
-  const [oh, om] = outStr.split(':').map(Number);
-  if ([ih, im, oh, om].some(Number.isNaN)) return null;
-  let minutes = (oh * 60 + om) - (ih * 60 + im);
-  if (minutes < 0) minutes += 24 * 60; // на случай ночной смены через полночь
-  return minutes / 60;
-}
-function tlFormatHours(hrs) {
-  const h = Math.floor(hrs);
-  const m = Math.round((hrs - h) * 60);
-  return `${h}ч ${m}м`;
-}
-function tlPay(hrs) {
-  return Math.round(hrs * HOURLY_RATE);
-}
-function tlFormatMoney(n) {
-  return n.toLocaleString('ru-RU') + ' ₽';
-}
 
 const DRINKS = [
   { cat:'Чаи', name:'Байховый', tmin:'', tmax:'', method:'Заваривание', out:'600 мл', ware:'Чайник', gar:'',
@@ -522,7 +487,7 @@ const DRINKS = [
 ];
 
 
-const DRINK_CATS = ['Все', 'Авторские', 'Чёрный кофе', 'Не кофе', 'Холодный кофе', 'Лимонады', 'Смузи', 'Чаи'];
+const DRINK_CATS = ['Авторские', 'Чёрный кофе', 'Не кофе', 'Холодный кофе', 'Лимонады', 'Смузи', 'Чаи'];
 
 const ALLERGENS = [
   { id:'milk',   label:'Молоко',  color:'#5FC8F0', keys:['молоко','сливки','сливочн','мороженое','крем сливочный','шоколад','нутелла','какао п/ф'] },
@@ -598,7 +563,7 @@ function BaristaOrders() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [supplierBannerDismissed, setSupplierBannerDismissed] = useState(false);
-  const [view, setView] = useState('zakaz');
+  const [view, setView] = useState('clean');
   const [baristaName, setBaristaName] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [askingName, setAskingName] = useState(false);
@@ -619,7 +584,7 @@ function BaristaOrders() {
   const [scrollY, setScrollY] = useState(0);
   const [isChief, setIsChief] = useState(false);
   const [orderTab, setOrderTab] = useState('search'); // 'search' | 'history' | 'cart'
-  const [drinkCat, setDrinkCat] = useState('Все');
+  const [drinkCat, setDrinkCat] = useState('Авторские');
   const [drinkOpen, setDrinkOpen] = useState(null); // имя раскрытой карточки (общее для Техкарт и Заготовок)
 
   const [clMarks, setClMarks] = useState({});
@@ -715,154 +680,6 @@ function BaristaOrders() {
     });
     return acc;
   }, { done: 0, total: 0 });
-
-  const [schMonthOffset, setSchMonthOffset] = useState(0);
-  const [schData, setSchData] = useState({});
-  const [schLoading, setSchLoading] = useState(false);
-  const [schPickerFor, setSchPickerFor] = useState(null); // например "14-morning"
-
-  const schViewMonthDate = (() => {
-    const d = new Date();
-    d.setDate(1); // чтобы прибавление месяцев не переползало через границы (напр. 31 марта + месяц)
-    d.setMonth(d.getMonth() + schMonthOffset);
-    return d;
-  })();
-  const schMonthKey = `schedule_${schViewMonthDate.getFullYear()}-${String(schViewMonthDate.getMonth() + 1).padStart(2, '0')}`;
-  const schDaysInMonth = new Date(schViewMonthDate.getFullYear(), schViewMonthDate.getMonth() + 1, 0).getDate();
-
-  const loadSchedule = useCallback(async (key) => {
-    setSchLoading(true);
-    try {
-      const r = await window.storage.get(key, true);
-      setSchData(r && r.value ? JSON.parse(r.value) : {});
-    } catch (e) { setSchData({}); }
-    setSchLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (view === 'clean') loadSchedule(schMonthKey);
-  }, [view, schMonthKey, loadSchedule]);
-
-  const assignShift = async (dayOfMonth, shift, name) => {
-    if (!isChief) return;
-    const next = { ...schData, [dayOfMonth]: { ...(schData[dayOfMonth] || {}), [shift]: name } };
-    setSchData(next);
-    setSchPickerFor(null);
-    try {
-      await window.storage.set(schMonthKey, JSON.stringify(next), true);
-      vibrate(8);
-    } catch (e) {
-      showToast('Не удалось сохранить график');
-    }
-  };
-
-  const [tlToday, setTlToday] = useState({});
-  const [tlInInput, setTlInInput] = useState('');
-  const [tlOutInput, setTlOutInput] = useState('');
-  const [tlWeekData, setTlWeekData] = useState({});
-  const [tlLoading, setTlLoading] = useState(false);
-  const [tlShowAll, setTlShowAll] = useState(false);
-  const [tlTeamData, setTlTeamData] = useState({});
-  const [tlTeamLoading, setTlTeamLoading] = useState(false);
-
-  // Каждый день и каждый сотрудник — отдельный ключ в базе.
-  // Так браузер обычного бариста физически не получает чужие времена и суммы —
-  // ни на экране, ни в сетевых запросах, а не просто «не показывает» их в интерфейсе.
-  const tlKey = (dateKey, name) => `timelog_${dateKey}_${name}`;
-
-  const loadTimelog = useCallback(async () => {
-    setTlLoading(true);
-    try {
-      const r = await window.storage.get(tlKey(tlDateKey(new Date()), baristaName), true);
-      const mine = r && r.value ? JSON.parse(r.value) : {};
-      setTlToday(mine);
-      setTlInInput(mine.in || '');
-      setTlOutInput(mine.out || '');
-    } catch (e) {
-      setTlToday({});
-      setTlInInput('');
-      setTlOutInput('');
-    }
-
-    const monday = schMondayOf(new Date());
-    const days = {};
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      const key = tlDateKey(d);
-      try {
-        const r = await window.storage.get(tlKey(key, baristaName), true);
-        days[key] = r && r.value ? JSON.parse(r.value) : null;
-      } catch (e) { days[key] = null; }
-    }
-    setTlWeekData(days);
-    setTlLoading(false);
-  }, [baristaName]);
-
-  useEffect(() => {
-    if (view === 'clean' && baristaName) loadTimelog();
-  }, [view, baristaName, loadTimelog]);
-
-  const saveTimelog = async () => {
-    // Меняем время — отметка «проверено» сбрасывается, чтобы шеф пересмотрел именно то,
-    // что реально сохранено, а не старое подтверждение к уже изменённым цифрам.
-    const entry = { in: tlInInput, out: tlOutInput, confirmed: false };
-    setTlToday(entry);
-    try {
-      await window.storage.set(tlKey(tlDateKey(new Date()), baristaName), JSON.stringify(entry), true);
-      vibrate([8, 40, 12]);
-      showToast('Время сохранено');
-      loadTimelog();
-    } catch (e) {
-      showToast('Не удалось сохранить время');
-    }
-  };
-
-  // Данные всей команды подгружаются только когда шеф сам разворачивает список —
-  // ни один запрос за чужим временем не уходит, пока он явно этого не попросил.
-  const loadTeamTimelog = useCallback(async () => {
-    setTlTeamLoading(true);
-    const monday = schMondayOf(new Date());
-    const result = {};
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      const key = tlDateKey(d);
-      result[key] = {};
-      for (const name of STAFF_NAMES) {
-        try {
-          const r = await window.storage.get(tlKey(key, name), true);
-          if (r && r.value) result[key][name] = JSON.parse(r.value);
-        } catch (e) {}
-      }
-    }
-    setTlTeamData(result);
-    setTlTeamLoading(false);
-  }, []);
-
-  const toggleShowAll = () => {
-    const next = !tlShowAll;
-    setTlShowAll(next);
-    if (next && isChief) loadTeamTimelog();
-  };
-
-  const toggleConfirm = async (dateKey, name) => {
-    if (!isChief) return;
-    const entry = tlTeamData[dateKey]?.[name];
-    if (!entry) return;
-    const updated = { ...entry, confirmed: !entry.confirmed };
-    const nextTeam = { ...tlTeamData, [dateKey]: { ...tlTeamData[dateKey], [name]: updated } };
-    setTlTeamData(nextTeam);
-    if (name === baristaName && dateKey === tlDateKey(new Date())) {
-      setTlToday(updated);
-    }
-    try {
-      await window.storage.set(tlKey(dateKey, name), JSON.stringify(updated), true);
-      vibrate(8);
-    } catch (e) {
-      showToast('Не удалось сохранить отметку');
-    }
-  };
 
   // Проверяем, был ли вход на этом устройстве ранее (пароль сохраняется локально)
   useEffect(() => {
@@ -1580,6 +1397,12 @@ function BaristaOrders() {
       <nav style={styles.nav}>
         <div style={styles.navInner}>
           <button
+            onClick={() => { setView('clean'); setPinUnlocked(false); setPinInput(''); }}
+            style={{ ...styles.navBtn, ...(view === 'clean' ? styles.navBtnActive : {}) }}
+          >
+            Чек-лист
+          </button>
+          <button
             onClick={() => { setView('zakaz'); setPinUnlocked(false); setPinInput(''); }}
             style={{ ...styles.navBtn, ...styles.navBtnCart, ...(view === 'zakaz' ? styles.navBtnActive : {}) }}
           >
@@ -1610,18 +1433,6 @@ function BaristaOrders() {
               Статистика
             </button>
           )}
-          <button
-            onClick={() => { setView('suppliers'); setPinUnlocked(false); setPinInput(''); }}
-            style={{ ...styles.navBtn, ...(view === 'suppliers' ? styles.navBtnActive : {}) }}
-          >
-            График
-          </button>
-          <button
-            onClick={() => { setView('clean'); setPinUnlocked(false); setPinInput(''); }}
-            style={{ ...styles.navBtn, ...(view === 'clean' ? styles.navBtnActive : {}) }}
-          >
-            Чек-лист
-          </button>
         </div>
       </nav>
       {!supplierBannerDismissed && supplierAlerts.length > 0 && (
@@ -1742,6 +1553,12 @@ function BaristaOrders() {
                   {cartItems.length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setOrderTab('suppliers')}
+              style={{ flex: 1, padding: '9px 4px', borderRadius: 13, fontSize: 12, fontWeight: 600, fontFamily: "'Inter', sans-serif", border: 'none', background: orderTab === 'suppliers' ? '#CCFF00' : 'transparent', color: orderTab === 'suppliers' ? '#0A0A0F' : 'rgba(245,247,250,0.55)' }}
+            >
+              График
             </button>
           </div>
 
@@ -1945,6 +1762,111 @@ function BaristaOrders() {
             </div>
           )}
             </>
+          ) : orderTab === 'suppliers' ? (
+            (() => {
+              const now = new Date();
+              const todayWd = getJsWeekday(now);
+              const todayH = now.getHours() + now.getMinutes() / 60;
+              const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+              const dayNums = [1, 2, 3, 4, 5, 6, 7];
+
+              const getStatus = (sched) => {
+                const works = sched.excludeDay
+                  ? todayWd !== sched.excludeDay
+                  : sched.days.includes(todayWd);
+                if (!works) return 'off';
+                if (todayH >= sched.deadline) return 'closed';
+                if (todayH >= sched.deadline - 1) return 'soon';
+                return 'open';
+              };
+
+              const statusColor = { open: '#00E5A0', soon: '#FFB800', closed: '#FF3D5A', off: '#3A3A46' };
+              const statusLabel = { open: 'Принимает', soon: 'Скоро закроется', closed: 'Закрыт', off: 'Не работает' };
+              const statusDot = { open: '●', soon: '◑', closed: '●', off: '○' };
+
+              return (
+                <>
+                  <p style={styles.eyebrowSection}>График</p>
+                  <h2 style={styles.sectionTitle}>Поставщики</h2>
+                  <div style={styles.suppDayRow}>
+                    {days.map((d, i) => (
+                      <div key={d} style={{
+                        ...styles.suppDayChip,
+                        background: dayNums[i] === todayWd ? 'rgba(204,255,0,0.2)' : 'transparent',
+                        color: dayNums[i] === todayWd ? GOLD : '#6B6B7A',
+                        border: dayNums[i] === todayWd ? '1px solid rgba(204,255,0,0.4)' : '1px solid transparent',
+                      }}>{d}</div>
+                    ))}
+                  </div>
+
+                  {Object.entries(SUPPLIERS).map(([name, sched]) => {
+                    const status = getStatus(sched);
+                    const hoursLeft = sched.days.includes(todayWd) && status !== 'off'
+                      ? Math.max(0, sched.deadline - todayH)
+                      : null;
+
+                    return (
+                      <div key={name} style={styles.suppCard}>
+                        <div style={styles.suppCardTop}>
+                          <div>
+                            <span style={styles.suppCardName}>{name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                              <span style={{ ...styles.suppStatusDot, color: statusColor[status] }}>
+                                {statusDot[status]}
+                              </span>
+                              <span style={{ ...styles.suppStatusLabel, color: statusColor[status] }}>
+                                {statusLabel[status]}
+                                {status === 'open' && hoursLeft !== null && hoursLeft < 4 &&
+                                  ` — осталось ${Math.floor(hoursLeft)}ч ${Math.round((hoursLeft % 1) * 60)}м`
+                                }
+                                {status === 'soon' &&
+                                  ` — до ${sched.deadline}:00`
+                                }
+                              </span>
+                            </div>
+                          </div>
+                          <div style={styles.suppDeadline}>
+                            до {sched.deadline}:00
+                          </div>
+                        </div>
+
+                        <div style={styles.suppDaysGrid}>
+                          {dayNums.map((dn, i) => {
+                            const isWorkDay = sched.excludeDay
+                              ? dn !== sched.excludeDay
+                              : sched.days.includes(dn);
+                            const isToday = dn === todayWd;
+                            return (
+                              <div key={dn} style={{
+                                ...styles.suppDayBox,
+                                background: isToday && isWorkDay
+                                  ? statusColor[status] + '33'
+                                  : isWorkDay
+                                    ? 'rgba(255,255,255,0.08)'
+                                    : 'rgba(255,255,255,0.02)',
+                                border: isToday
+                                  ? `1.5px solid ${isWorkDay ? statusColor[status] : '#3A3A46'}`
+                                  : '1px solid transparent',
+                                color: isWorkDay
+                                  ? isToday ? statusColor[status] : '#F5F7FA'
+                                  : '#3A3A46',
+                              }}>
+                                <span style={styles.suppDayBoxLabel}>{days[i]}</span>
+                                {isWorkDay && (
+                                  <span style={styles.suppDayBoxTime}>
+                                    {sched.deadline}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()
           ) : (
             <>
           <button onClick={() => setOrderTab('search')} style={styles.backRow}>
@@ -2037,221 +1959,6 @@ function BaristaOrders() {
           <p style={styles.eyebrowSection}>Смена</p>
           <h2 style={styles.sectionTitle}>Чек-лист — {CL_DAYS_FULL[clToday]}</h2>
 
-          <div style={{ ...styles.suppCard, marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 18 }}>🗓️</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, color: '#F5F7FA' }}>График смен</div>
-                <div style={{ fontSize: 10, color: '#8A8A9A', textTransform: 'capitalize' }}>
-                  {schViewMonthDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
-                </div>
-              </div>
-              <button onClick={() => setSchMonthOffset(o => o - 1)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, width: 26, height: 26, color: '#8A8A9A' }}>‹</button>
-              <button onClick={() => setSchMonthOffset(o => o + 1)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, width: 26, height: 26, color: '#8A8A9A', marginLeft: 4 }}>›</button>
-            </div>
-
-            {schLoading && <div style={{ fontSize: 12, color: '#8A8A9A', marginBottom: 8 }}>Загружаем…</div>}
-
-            {Array.from({ length: schDaysInMonth }, (_, i) => i + 1).map(dayOfMonth => {
-              const d = new Date(schViewMonthDate.getFullYear(), schViewMonthDate.getMonth(), dayOfMonth);
-              const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
-              const isPast = d < todayMidnight;
-              const isToday = d.getTime() === todayMidnight.getTime();
-              const weekdayLabel = d.toLocaleDateString('ru-RU', { weekday: 'short' });
-              const morning = schData[dayOfMonth]?.morning;
-              const evening = schData[dayOfMonth]?.evening;
-              return (
-                <div
-                  key={dayOfMonth}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
-                    borderBottom: dayOfMonth < schDaysInMonth ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                    opacity: isPast ? 0.5 : 1,
-                  }}
-                >
-                  <div style={{ width: 46, flexShrink: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: isToday ? '#CCFF00' : '#F5F7FA' }}>{dayOfMonth}</div>
-                    <div style={{ fontSize: 9, color: '#8A8A9A', textTransform: 'uppercase' }}>{weekdayLabel}</div>
-                  </div>
-                  <button
-                    onClick={() => isChief && setSchPickerFor(`${dayOfMonth}-morning`)}
-                    style={{
-                      flex: 1, textAlign: 'left', padding: '7px 10px', borderRadius: 9,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      background: morning ? 'rgba(204,255,0,0.08)' : 'rgba(255,255,255,0.03)',
-                      fontSize: 12, color: morning ? '#CCFF00' : '#6B6B7A',
-                    }}
-                  >
-                    ☀️ {morning || 'не назначено'}
-                  </button>
-                  <button
-                    onClick={() => isChief && setSchPickerFor(`${dayOfMonth}-evening`)}
-                    style={{
-                      flex: 1, textAlign: 'left', padding: '7px 10px', borderRadius: 9,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      background: evening ? 'rgba(185,103,255,0.1)' : 'rgba(255,255,255,0.03)',
-                      fontSize: 12, color: evening ? '#B967FF' : '#6B6B7A',
-                    }}
-                  >
-                    🌙 {evening || 'не назначено'}
-                  </button>
-                </div>
-              );
-            })}
-
-            {!isChief && (
-              <div style={{ fontSize: 11, color: '#6B6B7A', marginTop: 10 }}>Назначать смены может только шеф-бариста.</div>
-            )}
-          </div>
-
-          <div style={{ ...styles.suppCard, marginBottom: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 18 }}>⏱️</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, color: '#F5F7FA' }}>Табель — сегодня</div>
-                <div style={{ fontSize: 10, color: '#8A8A9A' }}>Ставка {HOURLY_RATE} ₽/час</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: '#8A8A9A', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Пришёл</div>
-                <input
-                  type="time"
-                  value={tlInInput}
-                  onChange={e => setTlInInput(e.target.value)}
-                  style={{ width: '100%', padding: '9px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#F5F7FA', fontSize: 14, outline: 'none' }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 10, color: '#8A8A9A', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ушёл</div>
-                <input
-                  type="time"
-                  value={tlOutInput}
-                  onChange={e => setTlOutInput(e.target.value)}
-                  style={{ width: '100%', padding: '9px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#F5F7FA', fontSize: 14, outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            {(() => {
-              const hrs = tlHoursBetween(tlInInput, tlOutInput);
-              return hrs !== null ? (
-                <div style={{ fontSize: 13, color: '#CCFF00', fontWeight: 600, marginBottom: 10 }}>
-                  {tlFormatHours(hrs)} · {tlFormatMoney(tlPay(hrs))}
-                </div>
-              ) : null;
-            })()}
-
-            <button
-              onClick={saveTimelog}
-              style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(204,255,0,0.4)', background: 'rgba(204,255,0,0.12)', color: '#CCFF00', fontSize: 14, fontWeight: 600 }}
-            >
-              Сохранить время
-            </button>
-
-            {(() => {
-              const weekKeys = Object.keys(tlWeekData).sort();
-              const myDays = weekKeys
-                .map(key => ({ key, entry: tlWeekData[key] }))
-                .filter(x => x.entry && x.entry.in && x.entry.out);
-              const myTotal = myDays.reduce((sum, x) => sum + (tlHoursBetween(x.entry.in, x.entry.out) || 0), 0);
-              if (!myDays.length) return null;
-              return (
-                <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: 10, color: '#8A8A9A', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 8 }}>Эта неделя</div>
-                  {myDays.map(({ key, entry }) => {
-                    const h = tlHoursBetween(entry.in, entry.out);
-                    const dLabel = new Date(key + 'T00:00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
-                    return (
-                      <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13 }}>
-                        <span style={{ color: '#F5F7FA' }}>{dLabel} · {entry.in}–{entry.out}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ color: '#8A8A9A' }}>{tlFormatHours(h)} · {tlFormatMoney(tlPay(h))}</span>
-                          <span style={{
-                            fontSize: 9, fontWeight: 700, letterSpacing: '0.3px', textTransform: 'uppercase',
-                            padding: '2px 7px', borderRadius: 6,
-                            color: entry.confirmed ? '#CCFF00' : '#8A8A9A',
-                            background: entry.confirmed ? 'rgba(204,255,0,0.12)' : 'rgba(255,255,255,0.06)',
-                          }}>
-                            {entry.confirmed ? 'Проверено' : 'Ожидает'}
-                          </span>
-                        </span>
-                      </div>
-                    );
-                  })}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 0', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: 14, fontWeight: 700 }}>
-                    <span style={{ color: '#F5F7FA' }}>Итого</span>
-                    <span style={{ color: '#CCFF00' }}>{tlFormatHours(myTotal)} · {tlFormatMoney(tlPay(myTotal))}</span>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {isChief && (
-              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                <button
-                  onClick={toggleShowAll}
-                  style={{ fontSize: 12, color: '#8A8A9A', background: 'none', border: 'none', padding: 0 }}
-                >
-                  {tlShowAll ? '▾' : '▸'} Табель всей команды за неделю
-                </button>
-                {tlShowAll && tlTeamLoading && (
-                  <div style={{ fontSize: 12, color: '#8A8A9A', marginTop: 8 }}>Загружаем…</div>
-                )}
-                {tlShowAll && !tlTeamLoading && (() => {
-                  const weekKeys = Object.keys(tlTeamData).sort();
-                  const rows = [];
-                  weekKeys.forEach(key => {
-                    const day = tlTeamData[key] || {};
-                    Object.entries(day).forEach(([name, entry]) => {
-                      if (!entry.in || !entry.out) return;
-                      rows.push({ key, name, entry });
-                    });
-                  });
-                  const grandTotal = rows.reduce((s, r) => s + (tlHoursBetween(r.entry.in, r.entry.out) || 0), 0);
-                  if (!rows.length) {
-                    return <div style={{ fontSize: 12, color: '#6B6B7A', marginTop: 8 }}>Пока никто не отметил время на этой неделе</div>;
-                  }
-                  return (
-                    <div style={{ marginTop: 10 }}>
-                      {rows.map(({ key, name, entry }) => {
-                        const h = tlHoursBetween(entry.in, entry.out);
-                        const dLabel = new Date(key + 'T00:00:00').toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
-                        return (
-                          <button
-                            key={key + name}
-                            onClick={() => toggleConfirm(key, name)}
-                            style={{
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              width: '100%', textAlign: 'left', padding: '9px 10px', borderRadius: 10,
-                              marginBottom: 5, border: '1px solid',
-                              borderColor: entry.confirmed ? 'rgba(204,255,0,0.35)' : 'rgba(255,255,255,0.08)',
-                              background: entry.confirmed ? 'rgba(204,255,0,0.08)' : 'rgba(255,255,255,0.03)',
-                            }}
-                          >
-                            <span>
-                              <span style={{ fontSize: 13, fontWeight: 600, color: '#F5F7FA' }}>{name}</span>
-                              <span style={{ fontSize: 11, color: '#8A8A9A', marginLeft: 8 }}>{dLabel} · {entry.in}–{entry.out}</span>
-                            </span>
-                            <span style={{ fontSize: 12, color: entry.confirmed ? '#CCFF00' : '#8A8A9A' }}>
-                              {tlFormatHours(h)} · {tlFormatMoney(tlPay(h))}
-                            </span>
-                          </button>
-                        );
-                      })}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 0', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: 13, fontWeight: 700 }}>
-                        <span style={{ color: '#F5F7FA' }}>Всего команде</span>
-                        <span style={{ color: '#CCFF00' }}>{tlFormatMoney(tlPay(grandTotal))}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: '#6B6B7A', marginTop: 8 }}>Тапни по строке, чтобы отметить день как проверенный</div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
-
           {clLoading && <div style={{ color: '#8A8A9A', fontSize: 13 }}>Загружаем…</div>}
 
           {CL_SECTIONS.map(section => {
@@ -2264,7 +1971,6 @@ function BaristaOrders() {
             return (
               <div key={section.id} style={{ ...styles.suppCard, marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <span style={{ fontSize: 18 }}>{section.icon}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 15, fontWeight: 700, color: '#F5F7FA' }}>{section.title}</div>
                     <div style={{ fontSize: 10, color: '#8A8A9A' }}>{section.weekly ? CL_DAYS_FULL[clToday] : 'каждый день'}</div>
@@ -2347,7 +2053,7 @@ function BaristaOrders() {
           </div>
 
           {(() => {
-            const list = DRINKS.filter(d => (drinkCat === 'Все' ? d.cat !== 'Заготовки' : d.cat === drinkCat));
+            const list = DRINKS.filter(d => d.cat === drinkCat);
             if (!list.length) return <div style={styles.emptyHint}>Ничего не нашлось</div>;
             return list.map(d => {
               const open = drinkOpen === d.name;
@@ -2362,7 +2068,7 @@ function BaristaOrders() {
                 >
                   <button
                     onClick={() => setDrinkOpen(open ? null : d.name)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 15px', textAlign: 'left' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 15px', textAlign: 'left', background: 'transparent', border: 'none' }}
                   >
                     {d.photo && <img src={d.photo} alt="" style={{ width: 44, height: 44, borderRadius: 11, objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -2386,7 +2092,7 @@ function BaristaOrders() {
                             {link ? (
                               <button
                                 onClick={() => { setView('pf'); setDrinkOpen(link); }}
-                                style={{ fontSize: 14, color: '#CCFF00', textAlign: 'left', padding: 0, borderBottom: '1px dashed rgba(204,255,0,0.35)' }}
+                                style={{ fontSize: 14, color: '#CCFF00', textAlign: 'left', padding: 0, borderBottom: '1px dashed rgba(204,255,0,0.35)', background: 'transparent', border: 'none', borderBottomStyle: 'dashed', borderBottomWidth: 1, borderBottomColor: 'rgba(204,255,0,0.35)' }}
                               >
                                 {nm} <span style={{ opacity: 0.7 }}>›</span>
                               </button>
@@ -2456,7 +2162,7 @@ function BaristaOrders() {
                 >
                   <button
                     onClick={() => setDrinkOpen(open ? null : d.name)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 15px', textAlign: 'left' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 15px', textAlign: 'left', background: 'transparent', border: 'none' }}
                   >
                     {d.photo && <img src={d.photo} alt="" style={{ width: 44, height: 44, borderRadius: 11, objectFit: 'cover', flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -2496,38 +2202,6 @@ function BaristaOrders() {
           })()}
         </main>
       ) : null}
-
-      {schPickerFor && (
-        <div style={styles.pinModal}>
-          <div style={styles.pinModalBox}>
-            <div style={styles.pinModalTitle}>Кто работает?</div>
-            {STAFF_NAMES.map(name => (
-              <button
-                key={name}
-                onClick={() => {
-                  const [dayNum, shift] = schPickerFor.split('-');
-                  assignShift(+dayNum, shift, name);
-                }}
-                style={{ width: '100%', textAlign: 'left', padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#F5F7FA', fontSize: 14, marginBottom: 8 }}
-              >
-                {name}
-              </button>
-            ))}
-            <button
-              onClick={() => {
-                const [dayNum, shift] = schPickerFor.split('-');
-                assignShift(+dayNum, shift, '');
-              }}
-              style={{ width: '100%', textAlign: 'center', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(255,61,90,0.3)', background: 'rgba(255,61,90,0.08)', color: '#FF6B7A', fontSize: 13, marginBottom: 8 }}
-            >
-              Очистить
-            </button>
-            <button onClick={() => setSchPickerFor(null)} style={{ width: '100%', textAlign: 'center', padding: '10px', color: '#8A8A9A', fontSize: 13, background: 'none', border: 'none' }}>
-              Отмена
-            </button>
-          </div>
-        </div>
-      )}
 
       {view === 'stats' && isChief && !pinUnlocked && (
         <main style={styles.main}>
@@ -2765,112 +2439,6 @@ function BaristaOrders() {
           </div>
         </div>
       )}
-
-      {view === 'suppliers' && (() => {
-        const now = new Date();
-        const todayWd = getJsWeekday(now);
-        const todayH = now.getHours() + now.getMinutes() / 60;
-        const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-        const dayNums = [1,2,3,4,5,6,7];
-
-        const getStatus = (sched) => {
-          const works = sched.excludeDay
-            ? todayWd !== sched.excludeDay
-            : sched.days.includes(todayWd);
-          if (!works) return 'off';
-          if (todayH >= sched.deadline) return 'closed';
-          if (todayH >= sched.deadline - 1) return 'soon';
-          return 'open';
-        };
-
-        const statusColor = { open: '#00E5A0', soon: '#FFB800', closed: '#FF3D5A', off: '#3A3A46' };
-        const statusLabel = { open: 'Принимает', soon: 'Скоро закроется', closed: 'Закрыт', off: 'Не работает' };
-        const statusDot = { open: '●', soon: '◑', closed: '●', off: '○' };
-
-        return (
-          <main style={styles.main}>
-            <p style={styles.eyebrowSection}>График</p>
-            <h2 style={styles.sectionTitle}>Поставщики</h2>
-            <div style={styles.suppDayRow}>
-              {days.map((d, i) => (
-                <div key={d} style={{
-                  ...styles.suppDayChip,
-                  background: dayNums[i] === todayWd ? 'rgba(204,255,0,0.2)' : 'transparent',
-                  color: dayNums[i] === todayWd ? GOLD : '#6B6B7A',
-                  border: dayNums[i] === todayWd ? '1px solid rgba(204,255,0,0.4)' : '1px solid transparent',
-                }}>{d}</div>
-              ))}
-            </div>
-
-            {Object.entries(SUPPLIERS).map(([name, sched]) => {
-              const status = getStatus(sched);
-              const hoursLeft = sched.days.includes(todayWd) && status !== 'off'
-                ? Math.max(0, sched.deadline - todayH)
-                : null;
-
-              return (
-                <div key={name} style={styles.suppCard}>
-                  <div style={styles.suppCardTop}>
-                    <div>
-                      <span style={styles.suppCardName}>{name}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                        <span style={{ ...styles.suppStatusDot, color: statusColor[status] }}>
-                          {statusDot[status]}
-                        </span>
-                        <span style={{ ...styles.suppStatusLabel, color: statusColor[status] }}>
-                          {statusLabel[status]}
-                          {status === 'open' && hoursLeft !== null && hoursLeft < 4 &&
-                            ` — осталось ${Math.floor(hoursLeft)}ч ${Math.round((hoursLeft % 1) * 60)}м`
-                          }
-                          {status === 'soon' &&
-                            ` — до ${sched.deadline}:00`
-                          }
-                        </span>
-                      </div>
-                    </div>
-                    <div style={styles.suppDeadline}>
-                      до {sched.deadline}:00
-                    </div>
-                  </div>
-
-                  {/* Дни недели */}
-                  <div style={styles.suppDaysGrid}>
-                    {dayNums.map((dn, i) => {
-                      const isWorkDay = sched.excludeDay
-                        ? dn !== sched.excludeDay
-                        : sched.days.includes(dn);
-                      const isToday = dn === todayWd;
-                      return (
-                        <div key={dn} style={{
-                          ...styles.suppDayBox,
-                          background: isToday && isWorkDay
-                            ? statusColor[status] + '33'
-                            : isWorkDay
-                              ? 'rgba(255,255,255,0.08)'
-                              : 'rgba(255,255,255,0.02)',
-                          border: isToday
-                            ? `1.5px solid ${isWorkDay ? statusColor[status] : '#3A3A46'}`
-                            : '1px solid transparent',
-                          color: isWorkDay
-                            ? isToday ? statusColor[status] : '#F5F7FA'
-                            : '#3A3A46',
-                        }}>
-                          <span style={styles.suppDayBoxLabel}>{days[i]}</span>
-                          {isWorkDay && (
-                            <span style={styles.suppDayBoxTime}>
-                              {sched.deadline}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </main>
-        );
-      })()}
 
       {toast && <div style={styles.toast}>{toast}</div>}
     </div>
