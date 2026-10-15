@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Стойка — Заявка на закупку</title>
+
+<!-- Иконки и PWA-манифест: при добавлении на главный экран используется
+     фирменная тёмная иконка с лаймовой надписью «СТОЙКА» -->
+<link rel="icon" type="image/png" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS: открывать как полноэкранное приложение без рамки Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Стойка">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0A0A0F">
+
+<!-- React + ReactDOM -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<!-- Babel standalone — компилирует JSX прямо в браузере -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+  html, body { margin: 0; padding: 0; background: #0A0A0F; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+  // ============================================
+  // НАСТРОЙКИ SUPABASE
+  // ============================================
+  const SUPABASE_URL = 'https://whselnzhzbvxtkncausz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_PChhLBXS8la2mQUFa6AMwQ_jlqptKdI';
+
+  // ============================================
+  // window.storage — через защищённые функции базы (RPC).
+  // Прямой доступ к таблице app_storage закрыт: каждое чтение и запись
+  // проверяется по сессионному ключу, который выдаётся при входе по коду
+  // и лежит только на устройстве сотрудника (localStorage).
+  // Публичный ключ SUPABASE_KEY сам по себе данных больше не открывает.
+  //   get(key, shared)         -> {key, value, shared} | бросает 'not found'
+  //   set(key, value, shared)  -> {key, value, shared} | бросает ошибку
+  //   list(prefix, shared)     -> {keys, prefix, shared} | null
+  // shared === false — личные данные устройства, хранятся в localStorage.
+  // ============================================
+  const SESSION_STORAGE_KEY = 'local_sessionToken';
+
+  function getSessionToken() {
+    try { return localStorage.getItem(SESSION_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+  window.getSessionToken = getSessionToken;
+
+  async function sbRpc(fn, args) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+    });
+    if (res.status === 401 || res.status === 403) {
+      // Сессия истекла или недействительна — приложение вернёт на экран входа
+      window.dispatchEvent(new Event('stoika-auth-expired'));
+      throw new Error('unauthorized');
+    }
+    if (!res.ok) throw new Error('rpc failed');
+    return res.json();
+  }
+
+  window.storage = {
+    async get(key, shared) {
+      if (shared === false) {
+        const v = localStorage.getItem('local_' + key);
+        if (v === null) throw new Error('not found');
+        return { key, value: v, shared: false };
+      }
+      const value = await sbRpc('storage_get', { p_token: getSessionToken(), p_key: key });
+      if (value === null || value === undefined) throw new Error('not found');
+      return { key, value, shared: true };
+    },
+
+    async set(key, value, shared) {
+      if (shared === false) {
+        localStorage.setItem('local_' + key, value);
+        return { key, value, shared: false };
+      }
+      await sbRpc('storage_set', { p_token: getSessionToken(), p_key: key, p_value: value });
+      return { key, value, shared: true };
+    },
+
+    async delete(key, shared) {
+      if (shared === false) {
+        localStorage.removeItem('local_' + key);
+        return { key, deleted: true, shared: false };
+      }
+      // Удаление общих данных из приложения отключено намеренно
+      return { key, deleted: false, shared: true };
+    },
+
+    async list(prefix, shared) {
+      try {
+        const keys = await sbRpc('storage_list', { p_token: getSessionToken(), p_prefix: prefix || '' });
+        return { keys: keys || [], prefix, shared: true };
+      } catch (e) {
+        return null;
+      }
+    },
+  };
+</script>
+
+<!-- Сам компонент приложения, скомпилированный Babel прямо в браузере -->
+<script type="text/babel" src="./BaristaOrders.jsx"></script>
+
+<script type="text/babel">
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<BaristaOrders />);
+</script>
+
+<script>
+// ─── Push-уведомления ────────────────────────────────────
+const PUSH_SERVER = 'https://zakup-push.onrender.com';
+
+// Утилита: конвертация VAPID public key
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function setupPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('Push не поддерживается в этом браузере');
+    return;
+  }
+
+  try {
+    // Регистрируем Service Worker
+    const reg = await navigator.serviceWorker.register('/zakup/sw.js');
+    console.log('[SW] Зарегистрирован');
+
+    // Запрашиваем разрешение на уведомления
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.log('Уведомления не разрешены');
+      return;
+    }
+
+    // Получаем публичный VAPID-ключ с сервера
+    const keyRes = await fetch(`${PUSH_SERVER}/vapid-public-key`);
+    const { key } = await keyRes.json();
+
+    // Подписываемся на push
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      console.log('[Push] Уже подписан');
+      return;
+    }
+
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+
+    // Отправляем подписку на сервер
+    await fetch(`${PUSH_SERVER}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription),
+    });
+    console.log('[Push] Подписка сохранена на сервере');
+
+  } catch (e) {
+    console.warn('[Push] Ошибка настройки:', e.message);
+  }
+}
+
+// Делаем setupPush глобальной — вызывается по нажатию кнопки в приложении
+window.setupPush = setupPush;
+
+// При загрузке только регистрируем SW, без запроса разрешения
+window.addEventListener('load', async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('/zakup/sw.js');
+      console.log('[SW] Зарегистрирован');
+    } catch (e) {
+      console.warn('[SW] Ошибка:', e.message);
+    }
+  }
+});
+</script>
+
+</body>
+</html>
