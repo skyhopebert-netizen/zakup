@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- Политика безопасности страницы: разрешено грузить скрипты только с самого сайта,
+     обращаться — только к базе Supabase и серверу уведомлений, шрифты — только Google Fonts.
+     Всё остальное браузер блокирует, даже если кто-то попытается подсунуть чужой код. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' https://whselnzhzbvxtkncausz.supabase.co https://zakup-push.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+
+<title>Стойка — Заявка на закупку</title>
+
+<!-- Иконки и PWA-манифест: при добавлении на главный экран используется
+     фирменная тёмная иконка с лаймовой надписью «СТОЙКА» -->
+<link rel="icon" type="image/png" href="favicon-64.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS: открывать как полноэкранное приложение без рамки Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Стойка">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0A0A0F">
+
+<style>
+  html, body { margin: 0; padding: 0; background: #0A0A0F; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<!-- React лежит прямо на сайте (раньше грузился с чужого сервера unpkg.com) -->
+<script src="react.production.min.js"></script>
+<script src="react-dom.production.min.js"></script>
+
+<!-- Подключение к базе (Supabase), защита от встраивания -->
+<script src="storage.js?v=20261015"></script>
+
+<!-- Само приложение: готовый скомпилированный код (из BaristaOrders.jsx) -->
+<script src="app.js?v=20261025b"></script>
+
+<!-- Push-уведомления -->
+<script src="push.js?v=20261015b"></script>
+
+</body>
+</html>
